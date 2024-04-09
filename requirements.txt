@@ -4,6 +4,6 @@
 
 azure-functions
 orjson
-pymongo[srv]
+pymongo[srv]==3.11
 requests
 certifi
