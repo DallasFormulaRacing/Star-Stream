@@ -3,17 +3,14 @@ import azure.functions as func
 import logging
 import os
 import requests
+import time
 from pymongo import MongoClient
 import certifi 
-
+import json
 import dns.resolver
 dns.resolver.default_resolver=dns.resolver.Resolver(configure=False)
 dns.resolver.default_resolver.nameservers=['8.8.8.8']
 
-try:
-    import orjson as json
-except ImportError:
-    import json
 
 app = func.FunctionApp()
 
@@ -40,6 +37,12 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
         "Content-Type": "application/json"
     }
     
+    current_ts = time.time_ns()
+    logging.info("Loki Timestamp: %s\nCurrent Timestamp: %s", str(events[0]['timestamp'] * 1000000000), current_ts)
+    
+    
+    
+    logging.info("Loki Delta: %d", current_ts - events[0]['timestamp'] * 1000000000)
     post_data = {
         "streams": [
             {
@@ -53,12 +56,12 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
         ]
     }
     # Push to Loki
-    resp = requests.post(os.environ["LOKI_URI"], headers=headers, json=post_data)
+    resp = requests.post(os.environ["LOKI_URI"], headers=headers, json=post_data, timeout=10)
     
     if resp.status_code != 204:
         logging.error("Error pushing to Loki: %s\n\nData; %s", resp.text, json.dumps(post_data, indent=3))
     else:
-        logging.info("Pushed to Loki with status %d", resp.status_code)
+        logging.info("Pushed to Loki with status %d: %s", resp.status_code, resp.content)
     
     client = MongoClient(os.environ["MONGO_URI"], tlsCAFile=certifi.where())
     # Push to MongoDB
