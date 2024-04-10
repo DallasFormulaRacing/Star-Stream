@@ -1,3 +1,4 @@
+from .event import Event
 from datetime import datetime
 import azure.functions as func
 import logging
@@ -19,20 +20,19 @@ app = func.FunctionApp()
 @app.event_hub_message_trigger(arg_name="azeventhub", event_hub_name="metricforwarder", cardinality="many",
                                connection="metricsforward_metricmanager_EVENTHUB")
 def eventhub_processor(azeventhub: func.EventHubEvent):
-    events = [json.loads(event.get_body().decode('utf-8'))
-              for event in azeventhub]
+    events = [Event.from_json(json.loads(event.get_body().decode('utf-8')) for event in azeventhub)]
 
-    logging.info("Processing %d events; first event: %s",
-                 len(events), json.dumps(events[0], indent=3))
+    logging.info("Processing %d events; first event: %s", len(events), json.dumps(events[0], indent=3))
 
     logging.info("Data: %s", json.dumps(events[0] if events else {}, indent=3))
+
+    for event in events:
+        if event.name == "linpots":
+            event.calculate_displacements()
 
     # grouping data by name
     data = {}
     for event in events:
-        if event['name'] == "linpots":
-            logging.info("Calculating displacements")
-            calculate_displacements([event])  # wrapped it in a list to be passed to function
         name = event['name']
         if name not in data:
             data[name] = []
@@ -44,11 +44,9 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
     }
 
     current_ts = time.time_ns()
-    logging.info("Loki Timestamp: %s\nCurrent Timestamp: %s",
-                 str(events[0]['timestamp'] * 1000000000), current_ts)
+    logging.info("Loki Timestamp: %s\nCurrent Timestamp: %s", str(events[0]['timestamp'] * 1000000000), current_ts)
 
-    logging.info("Loki Delta: %d", current_ts -
-                 events[0]['timestamp'] * 1000000000)
+    logging.info("Loki Delta: %d", current_ts - events[0]['timestamp'] * 1000000000)
     post_data = {
         "streams": [
             {
@@ -62,15 +60,12 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
         ]
     }
     # Push to Loki
-    resp = requests.post(os.environ["LOKI_URI"],
-                         headers=headers, json=post_data, timeout=10)
+    resp = requests.post(os.environ["LOKI_URI"], headers=headers, json=post_data, timeout=10)
 
     if resp.status_code != 204:
-        logging.error("Error pushing to Loki: %s\n\nData; %s",
-                      resp.text, json.dumps(post_data, indent=3))
+        logging.error("Error pushing to Loki: %s\n\nData; %s", resp.text, json.dumps(post_data, indent=3))
     else:
-        logging.info("Pushed to Loki with status %d: %s",
-                     resp.status_code, resp.content)
+        logging.info("Pushed to Loki with status %d: %s", resp.status_code, resp.content)
 
     client = MongoClient(os.environ["MONGO_URI"], tlsCAFile=certifi.where())
     # Push to MongoDB
@@ -96,20 +91,3 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
     logging.info("Pushed to MongoDB")
 
     client.close()
-
-
-def calculate_displacements(event):  # function modifies the values of the list in place then returns it
-
-    linpot_conversion_constant = 15.0
-    linpot_conversion_offset = 75.0
-
-    event['fields']['Front Left'] = (-(event['fields']['Front Left'] * linpot_conversion_constant) +
-                                     linpot_conversion_offset)
-    event['fields']['Front Right'] = (-(event['fields']['Front Right'] * linpot_conversion_constant) +
-                                      linpot_conversion_offset)
-    event['fields']['Rear Left'] = (-(event['fields']['Rear Left'] * linpot_conversion_constant) +
-                                    linpot_conversion_offset)
-    event['fields']['Rear Right'] = (-(event['fields']['Rear Right'] * linpot_conversion_constant) +
-                                     linpot_conversion_offset)
-
-    return event
