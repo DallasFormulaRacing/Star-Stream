@@ -4,6 +4,9 @@ from tpying import Dict, Any
 
 @dataclass
 class Event():
+    '''
+    Class for keeping track of the event data
+    '''
     name: str
     feilds: Dict[str, Any]
     tags: Dict[str, Any]
