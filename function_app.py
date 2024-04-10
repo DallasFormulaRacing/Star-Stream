@@ -20,6 +20,8 @@ app = func.FunctionApp()
 @app.event_hub_message_trigger(arg_name="azeventhub", event_hub_name="metricforwarder", cardinality="many",
                                connection="metricsforward_metricmanager_EVENTHUB")
 def eventhub_processor(azeventhub: func.EventHubEvent):
+
+    # pass incoming events into the event class
     events = [Event.from_json(json.loads(event.get_body().decode('utf-8')) for event in azeventhub)]
 
     logging.info("Processing %d events; first event: %s", len(events), json.dumps(events[0], indent=3))
@@ -28,7 +30,7 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
 
     for event in events:
         if event.name == "linpots":
-            event.calculate_displacements()
+            event.calculate_displacements()  # updates the value in event list
 
     # grouping data by name
     data = {}
