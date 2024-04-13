@@ -40,6 +40,9 @@ class AccelGyroEvent(BaseModel):
     '''
     Class for keeping track of accelgyro event data
     '''
+    def calculate_acceleration():
+        pass
+
     pass
 
 

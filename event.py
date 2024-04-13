@@ -25,3 +25,17 @@ class DataTransformer():
             logging.error("KeyError: %s", e)
             logging.error("Fields: %s", self.event.fields)
             return
+
+    def handle_acclgyro(self) -> Event:
+        """
+        apply acceleration calculations to the event fields.
+        this method is to handle all acclgyro transformations specifically
+        """
+        pass
+
+    def handle_ecu(self) -> Event:
+        """
+        apply ecu calculations to the event fields.
+        this method is to handle all ecu transformations specifically
+        """
+        pass
