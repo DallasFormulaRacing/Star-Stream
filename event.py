@@ -1,21 +1,28 @@
-from models import Event
+from models import Event, LinpotEvent
+import logging
 
 
-class Transform():
+class DataTransformer():
 
     def __init__(self, event: Event):
         self.event = event
 
-    def calculate_linpot_displacements(self):
+    def handle_linpot(self) -> Event:
         """
         apply displacement calculations to the event fields.
+        this method is to handle linpot specifically
         """
-        constant = 15.0
-        offset = 75.0
         # for key in list of keys
-        for key in ['Front Left', 'Front Right', 'Rear Left', 'Rear Right']:
-
-            # check if the key is in the feilds dict
-            if key in self.event.fields:
-                # update the value of the key in the feilds dict
-                self.event.fields[key] = -(self.event.fields[key] * constant) + offset
+        try:
+            linpot_event = LinpotEvent(
+                FrontLeft=self.event.fields['Front Left'],
+                FrontRight=self.event.fields['Front Right'],
+                RearLeft=self.event.fields['Rear Left'],
+                RearRight=self.event.fields['Rear Right']
+            )
+            event = linpot_event.calculate_displacements()
+            return event
+        except KeyError as e:
+            logging.error("KeyError: %s", e)
+            logging.error("Fields: %s", self.event.fields)
+            return

@@ -1,4 +1,4 @@
-from event import Transform
+from event import DataTransformer as DT
 from datetime import datetime
 import azure.functions as func
 import logging
@@ -25,10 +25,8 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
     events = [json.loads(event.get_body().decode('utf-8')) for event in azeventhub]
 
     # initilize the Transform class
-    transform = Transform(events)
-
-    # perform the displacement calculations
-    transform.calculate_linpot_displacements()
+    transform = DT(events)
+    transform.handle_linpot()
 
     logging.info("Processing %d events; first event: %s", len(events), json.dumps(events[0], indent=3))
 

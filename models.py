@@ -16,10 +16,21 @@ class LinpotEvent(BaseModel):
     '''
     Class for keeping track of linpot event data
     '''
-    valueFrontLeft: float
-    valueFrontRight: float
-    valueRearLeft: float
-    valueRearRight: float
+    # TODO rename the values for front left, front right, rear left, rear right and so on to not have spaces
+    FrontLeft: float
+    FrontRight: float
+    RearLeft: float
+    RearRight: float
+
+    def calculate_displacements(self):
+        constant = 15.0
+        offset = 75.0
+
+        for key in ["FrontLeft", "FrontRight", "RearLeft", "RearRight"]:
+            # updating the lin pot values in place
+            current_value = getattr(self, key)
+            new_value = -(current_value * constant) + offset
+            setattr(self, key, new_value)
 
 
 class AccelGyroEvent(BaseModel):
