@@ -10,7 +10,7 @@ class DataTransformer():
     def handle_linpot(self) -> Event:
         """
         apply displacement calculations to the event fields.
-        this method is to handle linpot specifically
+        this method is to handle all linpot transformations specifically
         """
         # for key in list of keys
         try:
@@ -20,8 +20,7 @@ class DataTransformer():
                 RearLeft=self.event.fields['Rear Left'],
                 RearRight=self.event.fields['Rear Right']
             )
-            event = linpot_event.calculate_displacements()
-            return event
+            linpot_event.calculate_displacements()
         except KeyError as e:
             logging.error("KeyError: %s", e)
             logging.error("Fields: %s", self.event.fields)

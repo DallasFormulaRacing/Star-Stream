@@ -32,6 +32,9 @@ class LinpotEvent(BaseModel):
             new_value = -(current_value * constant) + offset
             setattr(self, key, new_value)
 
+    def calculate_wheel_loads():
+        pass
+
 
 class AccelGyroEvent(BaseModel):
     '''

@@ -24,10 +24,6 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
     # pass incoming events into the event class
     events = [json.loads(event.get_body().decode('utf-8')) for event in azeventhub]
 
-    # initilize the Transform class
-    transform = DT(events)
-    transform.handle_linpot()
-
     logging.info("Processing %d events; first event: %s", len(events), json.dumps(events[0], indent=3))
 
     logging.info("Data: %s", json.dumps(events[0] if events else {}, indent=3))
@@ -35,6 +31,8 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
     # grouping data by name
     data = {}
     for event in events:
+        if event["name"] == "linpot":
+            DT(event).handle_linpot()
         name = event['name']
         if name not in data:
             data[name] = []
