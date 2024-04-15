@@ -15,10 +15,10 @@ class DataTransformer():
         # for key in list of keys
         try:
             linpot_event = LinpotEvent(
-                FrontLeft=self.event.fields['Front Left'],
-                FrontRight=self.event.fields['Front Right'],
-                RearLeft=self.event.fields['Rear Left'],
-                RearRight=self.event.fields['Rear Right']
+                FrontLeft=self.event.fields['front_left'],
+                FrontRight=self.event.fields['front_right'],
+                RearLeft=self.event.fields['rear_left'],
+                RearRight=self.event.fields['rear_right']
             )
             linpot_event.calculate_displacements_mm()
         except KeyError as e:

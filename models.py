@@ -21,10 +21,10 @@ class LinpotEvent(BaseModel):
     Class for keeping track of linpot event data
     '''
     # TODO rename the values for front left, front right, rear left, rear right and so on to not have spaces
-    FrontLeft: float
-    FrontRight: float
-    RearLeft: float
-    RearRight: float
+    front_left: float
+    front_right: float
+    rear_left: float
+    rear_right: float
 
     def calculate_displacements_mm(self):
         for key in ["Front Left", "Front Right", "Rear Left", "Rear Right"]:
