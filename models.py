@@ -1,6 +1,10 @@
 from pydantic import BaseModel
 from typing import Any, Dict
 
+LINPOT_CONVERSION_CONSTANT = 15.0
+LINPOT_CONVERSION_OFFSET = 75.0
+MM_TO_IN_CONVERSION_FACTOR = 0.0393701
+
 
 class Event(BaseModel):
     '''
@@ -22,14 +26,11 @@ class LinpotEvent(BaseModel):
     RearLeft: float
     RearRight: float
 
-    def calculate_displacements(self):
-        constant = 15.0
-        offset = 75.0
-
-        for key in ["FrontLeft", "FrontRight", "RearLeft", "RearRight"]:
+    def calculate_displacements_mm(self):
+        for key in ["Front Left", "Front Right", "Rear Left", "Rear Right"]:
             # updating the lin pot values in place
             current_value = getattr(self, key)
-            new_value = -(current_value * constant) + offset
+            new_value = -(current_value * LINPOT_CONVERSION_CONSTANT) + LINPOT_CONVERSION_OFFSET
             setattr(self, key, new_value)
 
     def calculate_wheel_loads():
@@ -40,7 +41,7 @@ class AccelGyroEvent(BaseModel):
     '''
     Class for keeping track of accelgyro event data
     '''
-    def calculate_acceleration():
+    def calculate_gforce():
         pass
 
     pass

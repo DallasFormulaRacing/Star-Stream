@@ -20,7 +20,7 @@ class DataTransformer():
                 RearLeft=self.event.fields['Rear Left'],
                 RearRight=self.event.fields['Rear Right']
             )
-            linpot_event.calculate_displacements()
+            linpot_event.calculate_displacements_mm()
         except KeyError as e:
             logging.error("KeyError: %s", e)
             logging.error("Fields: %s", self.event.fields)
