@@ -1,4 +1,5 @@
 from event import DataTransformer as DT
+from event import parser as PS
 from datetime import datetime
 import azure.functions as func
 import logging
@@ -31,8 +32,8 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
     # grouping data by name
     data = {}
     for event in events:
-        if event["name"] == "linpot":
-            DT(event).handle_linpot()
+        PS(event).parse()
+        
         name = event['name']
         if name not in data:
             data[name] = []

@@ -2,6 +2,21 @@ from models import Event, LinpotEvent
 import logging
 
 
+class parser():
+    def __init__(self, event: Event) -> None:
+        self.event = event
+    
+    def parse(self)-> Event:
+        
+        
+        if self.event["name"] == "linpot":
+            DataTransformer(self.event).handle_linpot()
+        name = self.event['name']
+        if self.event["name"] == "acclgyro":
+            DataTransformer(self.event).handle_acclgyro()
+        if self.event["name"] == "ecu":
+            DataTransformer(self.event).handle_ecu()
+
 class DataTransformer():
 
     def __init__(self, event: Event):
