@@ -26,13 +26,20 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
     
     # grouping data by name 
     data = {}
-    for event in events:
-        name = event['name']
-        if name not in data:
-            data[name] = []
-        data[name].append(event)
     
-    logging.info("Created %d groups (%s)", len(data), ",".join(data.keys()))
+    # group all events that have the same event['tasg'] 
+    for event in events:
+        tags = event['tags']
+        
+        # Call frozen set because we can't hash a dictionary
+        tags_key = frozenset(tags.items())
+        if tags_key not in data:
+            data[tags_key] = []
+            
+        data[tags_key].append(event)
+        
+    
+    logging.info("Created %d groups", len(data))
     headers = {
         "Content-Type": "application/json"
     }
@@ -46,13 +53,11 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
     post_data = {
         "streams": [
             {
-                "stream": {
-                    "source": name
-                },
+                "stream": {k:v for (k,v) in tags},
                 "values": [ # this stupid conversion to nanoseconds. Who tf does logs in nanoseconds
-                    [str(dump["timestamp"] * 1000000000), json.dumps(dump['fields']), dump['tags']] for dump in dumps
+                    [str(dump["timestamp"] * 1000000000), json.dumps(dump['fields'])] for dump in dumps
                 ]
-            } for name, dumps in data.items()
+            } for tags, dumps in data.items()
         ]
     }
     # Push to Loki
