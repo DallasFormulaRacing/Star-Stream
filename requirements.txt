@@ -7,3 +7,4 @@ orjson
 pymongo[srv]==3.11
 requests
 certifi
+python-can
