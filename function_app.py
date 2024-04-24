@@ -23,50 +23,59 @@ app = func.FunctionApp()
 def eventhub_processor(azeventhub: func.EventHubEvent):
 
     # pass incoming events into the event class
-    events = [json.loads(event.get_body().decode('utf-8')) for event in azeventhub]
+    events = [json.loads(event.get_body().decode('utf-8'))
+              for event in azeventhub]
 
-    logging.info("Processing %d events; first event: %s", len(events), json.dumps(events[0], indent=3))
+    logging.info("Processing %d events; first event: %s",
+                 len(events), json.dumps(events[0], indent=3))
 
     logging.info("Data: %s", json.dumps(events[0] if events else {}, indent=3))
 
     # grouping data by name
     data = {}
-    for event in events:
-        PS(event).parse()
-        
-        name = event['name']
-        if name not in data:
-            data[name] = []
-        data[name].append(event)
 
-    logging.info("Created %d groups (%s)", len(data), ",".join(data.keys()))
+    # group all events that have the same event['tasg']
+    for event in events:
+        tags = event['tags']
+
+        # Call frozen set because we can't hash a dictionary
+        tags_key = frozenset(tags.items())
+        if tags_key not in data:
+            data[tags_key] = []
+
+        data[tags_key].append(event)
+
+    logging.info("Created %d groups", len(data))
     headers = {
         "Content-Type": "application/json"
     }
 
     current_ts = time.time_ns()
-    logging.info("Loki Timestamp: %s\nCurrent Timestamp: %s", str(events[0]['timestamp'] * 1000000000), current_ts)
+    logging.info("Loki Timestamp: %s\nCurrent Timestamp: %s",
+                 str(events[0]['timestamp'] * 1000000000), current_ts)
 
-    logging.info("Loki Delta: %d", current_ts - events[0]['timestamp'] * 1000000000)
+    logging.info("Loki Delta: %d", current_ts -
+                 events[0]['timestamp'] * 1000000000)
     post_data = {
         "streams": [
             {
-                "stream": {
-                    "source": name
-                },
+                "stream": {k: v for (k, v) in tags},
                 "values": [  # this stupid conversion to nanoseconds. Who tf does logs in nanoseconds
-                    [str(dump["timestamp"] * 1000000000), json.dumps(dump['fields']), dump['tags']] for dump in dumps
+                    [str(dump["timestamp"] * 1000000000), json.dumps(dump['fields'])] for dump in dumps
                 ]
-            } for name, dumps in data.items()
+            } for tags, dumps in data.items()
         ]
     }
     # Push to Loki
-    resp = requests.post(os.environ["LOKI_URI"], headers=headers, json=post_data, timeout=10)
+    resp = requests.post(os.environ["LOKI_URI"],
+                         headers=headers, json=post_data, timeout=10)
 
     if resp.status_code != 204:
-        logging.error("Error pushing to Loki: %s\n\nData; %s", resp.text, json.dumps(post_data, indent=3))
+        logging.error("Error pushing to Loki: %s\n\nData; %s",
+                      resp.text, json.dumps(post_data, indent=3))
     else:
-        logging.info("Pushed to Loki with status %d: %s", resp.status_code, resp.content)
+        logging.info("Pushed to Loki with status %d: %s",
+                     resp.status_code, resp.content)
 
     client = MongoClient(os.environ["MONGO_URI"], tlsCAFile=certifi.where())
     # Push to MongoDB
