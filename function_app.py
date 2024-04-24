@@ -1,5 +1,5 @@
 from event import DataTransformer as DT
-from event import parser as PS
+from event import Parser
 from datetime import datetime
 import azure.functions as func
 import logging
@@ -36,6 +36,8 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
 
     # group all events that have the same event['tasg']
     for event in events:
+        # Parse the event
+        Parser(event)
         tags = event['tags']
 
         # Call frozen set because we can't hash a dictionary

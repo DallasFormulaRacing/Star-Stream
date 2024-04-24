@@ -2,20 +2,18 @@ from models import Event, LinpotEvent
 import logging
 
 
-class parser():
+class Parser():
     def __init__(self, event: Event) -> None:
         self.event = event
-    
-    def parse(self)-> Event:
-        
-        
+
+    def parse(self) -> Event:
         if self.event["name"] == "linpot":
             DataTransformer(self.event).handle_linpot()
-        name = self.event['name']
         if self.event["name"] == "acclgyro":
             DataTransformer(self.event).handle_acclgyro()
         if self.event["name"] == "ecu":
             DataTransformer(self.event).handle_ecu()
+
 
 class DataTransformer():
 
@@ -35,7 +33,9 @@ class DataTransformer():
                 RearLeft=self.event.fields['rear_left'],
                 RearRight=self.event.fields['rear_right']
             )
-            linpot_event.calculate_displacements_mm()
+            displacement_in_mm = linpot_event.calculate_displacements_mm()
+            self.event.fields.update(displacement_in_mm)
+
         except KeyError as e:
             logging.error("KeyError: %s", e)
             logging.error("Fields: %s", self.event.fields)

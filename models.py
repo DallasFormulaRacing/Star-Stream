@@ -27,11 +27,16 @@ class LinpotEvent(BaseModel):
     rear_right: float
 
     def calculate_displacements_mm(self):
-        for key in ["Front Left", "Front Right", "Rear Left", "Rear Right"]:
-            # updating the lin pot values in place
+
+        displacements = {}
+        linpots = ["front_left", "front_right", "rear_left", "rear_right"]
+
+        for key in linpots:
             current_value = getattr(self, key)
-            new_value = -(current_value * LINPOT_CONVERSION_CONSTANT) + LINPOT_CONVERSION_OFFSET
-            setattr(self, key, new_value)
+            converted_to_mm = -(current_value * LINPOT_CONVERSION_CONSTANT) + LINPOT_CONVERSION_OFFSET
+            displacements[key] = converted_to_mm
+
+        return displacements
 
     def calculate_wheel_loads():
         pass
