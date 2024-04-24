@@ -1,0 +1,19 @@
+'''
+[2024-04-09T02:00:34.360Z] Data: {
+   "fields": {
+      "Front Left": 1.6096181869506836,
+      "Front Right": 1.7028025388717651,
+      "Rear Left": 1.9346576929092407,
+      "Rear Right": 1.82157301902771
+   },
+   "name": "linpots",
+   "tags": {
+      "car": "IC-24",
+      "host": "raspberrypi",
+      "session_id": "92",
+      "source": "linpot"
+   },
+   "timestamp": 1712627126
+}
+Dict[key, value] : Dict[str, Any]
+'''
