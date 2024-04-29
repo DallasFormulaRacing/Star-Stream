@@ -12,6 +12,7 @@ import json
 import dns.resolver
 from can import Message
 from data_deserializer import MessageData
+from event import DataTransformer, Parser
 dns.resolver.default_resolver=dns.resolver.Resolver(configure=False)
 dns.resolver.default_resolver.nameservers=['8.8.8.8']
 
@@ -49,6 +50,8 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
             except Exception: # TODO: Make this a specific exception
                 logging.error("[ECU] Error converting to dict: %s", msg)
                 continue
+        elif event["tags"].get("source", "") == "linpot":
+            
         tags = event['tags']
 
         # Call frozen set because we can't hash a dictionary

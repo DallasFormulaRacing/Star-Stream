@@ -33,13 +33,13 @@ class DataTransformer():
                 RearLeft=self.event.fields['rear_left'],
                 RearRight=self.event.fields['rear_right']
             )
-            displacement_in_mm = linpot_event.calculate_displacements_mm()
-            self.event.fields.update(displacement_in_mm)
+            displacement_object = linpot_event.calculate_displacements_mm(self.event)
+            return displacement_object
 
         except KeyError as e:
             logging.error("KeyError: %s", e)
             logging.error("Fields: %s", self.event.fields)
-            return
+            return None
 
     def handle_acclgyro(self) -> Event:
         """

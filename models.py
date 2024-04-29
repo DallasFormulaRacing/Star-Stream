@@ -20,13 +20,17 @@ class LinpotEvent(BaseModel):
     '''
     Class for keeping track of linpot event data
     '''
-    # TODO rename the values for front left, front right, rear left, rear right and so on to not have spaces
     front_left: float
     front_right: float
     rear_left: float
     rear_right: float
 
-    def calculate_displacements_mm(self):
+    def calculate_displacements_mm(self, event: Event)-> Event:
+        """calcualtes displacements in mm from linpot values
+
+        Returns:
+            dict: displacements in mm
+        """
 
         displacements = {}
         linpots = ["front_left", "front_right", "rear_left", "rear_right"]
@@ -36,9 +40,11 @@ class LinpotEvent(BaseModel):
             converted_to_mm = -(current_value * LINPOT_CONVERSION_CONSTANT) + LINPOT_CONVERSION_OFFSET
             displacements[key] = converted_to_mm
 
-        return displacements
+        event.fields.update(displacements)
+        
+        return event
 
-    def calculate_wheel_loads():
+    def calculate_wheel_loads(self):
         pass
 
 
@@ -49,7 +55,6 @@ class AccelGyroEvent(BaseModel):
     def calculate_gforce():
         pass
 
-    pass
 
 
 class ECUEvent(BaseModel):
