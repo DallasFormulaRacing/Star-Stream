@@ -10,8 +10,10 @@ from pymongo import MongoClient
 import certifi
 import json
 import dns.resolver
-dns.resolver.default_resolver = dns.resolver.Resolver(configure=False)
-dns.resolver.default_resolver.nameservers = ['8.8.8.8']
+from can import Message
+from data_deserializer import MessageData
+dns.resolver.default_resolver=dns.resolver.Resolver(configure=False)
+dns.resolver.default_resolver.nameservers=['8.8.8.8']
 
 
 app = func.FunctionApp()
@@ -19,15 +21,11 @@ app = func.FunctionApp()
 
 @app.function_name("EventHubTrigger1")
 @app.event_hub_message_trigger(arg_name="azeventhub", event_hub_name="metricforwarder", cardinality="many",
-                               connection="metricsforward_metricmanager_EVENTHUB")
-def eventhub_processor(azeventhub: func.EventHubEvent):
+                               connection="metricsforward_metricmanager_EVENTHUB") 
+def eventhub_processor(azeventhub: func.EventHubEvent):    
+    events = [json.loads(event.get_body().decode('utf-8')) for event in azeventhub]
 
-    # pass incoming events into the event class
-    events = [json.loads(event.get_body().decode('utf-8'))
-              for event in azeventhub]
-
-    logging.info("Processing %d events; first event: %s",
-                 len(events), json.dumps(events[0], indent=3))
+    logging.info("Processing %d events; first event: %s", len(events), json.dumps(events[0], indent=3))
 
     logging.info("Data: %s", json.dumps(events[0] if events else {}, indent=3))
 
@@ -36,8 +34,21 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
 
     # group all events that have the same event['tasg']
     for event in events:
-        # Parse the event
-        Parser(event)
+        if event["tags"].get("source", "") == "ecu":
+            arbitration_id = event["fields"].get("id", 0)
+            raw_data = event["fields"].get("data", "")
+            timestamp = event["timestamp"]
+
+            # parsing data
+            data_strings = raw_data.split(" ")
+            ecu_data = [int(data_string, 16) for data_string in data_strings]
+            msg = Message(timestamp=timestamp, arbitration_id=arbitration_id, data=ecu_data)
+            msg_data = MessageData(msg)
+            try:
+                event["fields"] = json.loads(json.dumps(msg_data.to_dict(), default=str))
+            except Exception: # TODO: Make this a specific exception
+                logging.error("[ECU] Error converting to dict: %s", msg)
+                continue
         tags = event['tags']
 
         # Call frozen set because we can't hash a dictionary
@@ -53,24 +64,21 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
     }
 
     current_ts = time.time_ns()
-    logging.info("Loki Timestamp: %s\nCurrent Timestamp: %s",
-                 str(events[0]['timestamp'] * 1000000000), current_ts)
+    logging.info("Loki Timestamp: %s\nCurrent Timestamp: %s", str(events[0]['timestamp'] * 1000000), current_ts)
 
-    logging.info("Loki Delta: %d", current_ts -
-                 events[0]['timestamp'] * 1000000000)
+    logging.info("Loki Delta: %d", current_ts - events[0]['timestamp'] * 1000000)
     post_data = {
         "streams": [
             {
-                "stream": {k: v for (k, v) in tags},
-                "values": [  # this stupid conversion to nanoseconds. Who tf does logs in nanoseconds
-                    [str(dump["timestamp"] * 1000000000), json.dumps(dump['fields'])] for dump in dumps
+                "stream": {k:v for (k,v) in tags},
+                "values": [ # this stupid conversion to nanoseconds. Who tf does logs in nanoseconds
+                    [str(dump["timestamp"] * 1000000), json.dumps(dump['fields'], default=str)] for dump in dumps
                 ]
             } for tags, dumps in data.items()
         ]
     }
     # Push to Loki
-    resp = requests.post(os.environ["LOKI_URI"],
-                         headers=headers, json=post_data, timeout=10)
+    resp = requests.post(os.environ["LOKI_URI"], headers=headers, json=post_data, timeout=10)
 
     if resp.status_code != 204:
         logging.error("Error pushing to Loki: %s\n\nData; %s",
@@ -86,11 +94,10 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
     documents = []
     for doc in events:
         doc = {
-            "metadata": doc['tags'],
-            "timestamp": datetime.fromtimestamp(doc['timestamp']),
-            **doc['fields']
-        }
-
+                "metadata": doc['tags'],
+                "timestamp": datetime.fromtimestamp(doc['timestamp'] / 1000),
+                **doc['fields']
+            }
         # validate timestamp because they suck
         if doc['timestamp'] > datetime.now() or doc['timestamp'] < datetime(2020, 1, 1):
             logging.error("Invalid timestamp: %s", doc['timestamp'])
