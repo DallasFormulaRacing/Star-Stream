@@ -50,10 +50,3 @@ class AccelGyroEvent(BaseModel):
         pass
 
     pass
-
-
-class ECUEvent(BaseModel):
-    '''
-    Class for keeping track of ecu event data
-    '''
-    pass
