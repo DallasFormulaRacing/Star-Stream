@@ -159,7 +159,7 @@ class MessageData:
                 if "data" in annotations:
                     kwargs["data"] = messsage.data[
                         obj["start_position"]
-                        - 1 : obj["start_position"]
+                        - 1: obj["start_position"]
                         + obj["length"]
                         - 1
                     ]
