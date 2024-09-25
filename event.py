@@ -1,5 +1,6 @@
 from models import Event, LinpotEvent
 import logging
+from pydantic import ValidationError
 
 
 class Parser():

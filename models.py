@@ -1,9 +1,10 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError 
 from typing import Any, Dict
 
 LINPOT_CONVERSION_CONSTANT = 15.0
 LINPOT_CONVERSION_OFFSET = 75.0
 MM_TO_IN_CONVERSION_FACTOR = 0.0393701
+
 
 
 class Event(BaseModel):

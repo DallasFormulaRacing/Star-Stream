@@ -1,12 +1,14 @@
 from event import DataTransformer as DT
 from event import Parser
+from models1 import EventModel
 from datetime import datetime
 import azure.functions as func
 import logging
 import os
 import requests
 import time
-from pymongo import MongoClient
+from pymongo import MongoClient # change this too
+#import psycopg2 
 import certifi
 import json
 import dns.resolver
@@ -19,14 +21,46 @@ dns.resolver.default_resolver.nameservers=['8.8.8.8']
 
 app = func.FunctionApp()
 
+class State:
+    postgres_client = ""
+
 
 @app.function_name("EventHubTrigger1")
 @app.event_hub_message_trigger(arg_name="azeventhub", event_hub_name="metricforwarder", cardinality="many",
                                connection="metricsforward_metricmanager_EVENTHUB")
 def eventhub_processor(azeventhub: func.EventHubEvent):
-    events = [json.loads(event.get_body().decode('utf-8')) for event in azeventhub]
 
-    logging.info("Processing %d events; first event: %s", len(events), json.dumps(events[0], indent=3))
+    # pass incoming events into the event class
+    events = [json.loads(event.get_body().decode('utf-8'))
+              for event in azeventhub]
+    
+
+    # for event in events:
+    #     try:
+    #         event_model = EventModel(event=event)
+    #     except ValidationError:
+    #         # handle failure 
+    #         print("oh no we failed")
+        
+    #         continue 
+
+    #     dataclass = event_model.event
+        
+    #     dataclass.event_type
+
+    #     if dataclass.event_type == "metrics":
+    #         handle_metrics_event(event)
+    #     elif dataclass.event_type == "session":
+    #         handle_session_event(event)
+        
+
+        
+
+        
+        
+        
+    logging.info("Processing %d events; first event: %s",
+                 len(events), json.dumps(events[0], indent=3))
 
     logging.info("Data: %s", json.dumps(events[0] if events else {}, indent=3))
 
@@ -93,7 +127,7 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
         logging.info("Pushed to Loki with status %d: %s",
                      resp.status_code, resp.content)
 
-    client = MongoClient(os.environ["MONGO_URI"], tlsCAFile=certifi.where())
+    client = MongoClient(os.environ["MONGO_URI"], tlsCAFile=certifi.where()) #change mongoClient to Postgres
     # Push to MongoDB
     db = client["cluster0"]
 
