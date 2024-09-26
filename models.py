@@ -43,12 +43,11 @@ class SessionEvent(BaseModel):
 # Data Models 
 
 class MetricModel(BaseModel):
-    time: datetime 
+    time: float 
     sensor_id: int 
     data: float 
 
-class MetricDataModel(BaseModel):
-    metrics: List[MetricModel]
+MetricDataModel = List[MetricModel]
 
 class MetricEvent(BaseModel):
     event_type: Literal["metrics"]
