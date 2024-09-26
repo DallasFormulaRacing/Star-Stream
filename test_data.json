@@ -1,0 +1,22 @@
+{
+    "event": {
+        "event_type": "metrics",
+        "data": [
+            {
+                "time": 1727338611.289379,
+                "sensor_id": 10,
+                "data": 5.4
+            },
+            {
+                "time": 1727338612.289379,
+                "sensor_id": 10,
+                "data": 6.0
+            },
+            {
+                "time": 1727338613.289379,
+                "sensor_id": 10,
+                "data": 4.4
+            }
+        ]
+    }
+}
