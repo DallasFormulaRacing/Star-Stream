@@ -13,7 +13,6 @@
 """
 from typing import List, Optional, Union, Literal, Dict, Any, Annotated
 from enum import Enum 
-
 from datetime import datetime
 from pydantic import BaseModel, Field, ValidationError
 
@@ -25,29 +24,42 @@ class SessionStateEnum(str, Enum):
     CLOSED = "closed"
     ERROR = "error"
 
-class SessionDataModel(BaseModel):
-    """
-    All session data
-    """
-    id: str
+"""
+All session data
+"""
+class OpenStatus (BaseModel):
+    id: str #
+    status: SessionStateEnum.OPEN
     start: datetime
-    stop: Optional[datetime]
-    status: SessionStateEnum
-    car: str
-    driver: Optional[str]
+    car: str #IC24
+class ClosedStatus(BaseModel):
+    id: str
+    status: SessionStateEnum.CLOSED
+    stop: datetime
+    
+class ErrorStatus(BaseModel):
+    id: str
+    status: SessionStateEnum.ERROR
+    error_name: str
+    error_description: str
+
 
 class SessionEvent(BaseModel):
-    event_type: Literal["session"]
-    data: SessionDataModel
+    event_type: Literal["session"] #it MUST be session
+    data: Annotated[Union[OpenStatus, ClosedStatus, ErrorStatus], Field(discriminator="status")] 
 
-# Data Models 
+
+
+
+# Data(metric) Models 
 
 class MetricModel(BaseModel):
     time: float 
     sensor_id: int 
     data: float 
 
-MetricDataModel = List[MetricModel]
+MetricDataModel = List[MetricModel] 
+
 
 class MetricEvent(BaseModel):
     event_type: Literal["metrics"]
