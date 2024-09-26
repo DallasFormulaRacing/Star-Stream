@@ -1,65 +1,64 @@
-from pydantic import BaseModel, ValidationError 
-from typing import Any, Dict
+# import basemodel from pydantic
+#create my three classes 
+# EVENT DATA SESSION ARE THE 3 CLASSES  
+"""
+# import basemodel from pydantic
+# create my three classes 
+# EVENT, DATA, SESSION ARE THE 3 CLASSES  
+    ALL 3 OF THESE CLASSES ARE GOING TO INHERIT  FROM BASE MODEL(event)
 
-LINPOT_CONVERSION_CONSTANT = 15.0
-LINPOT_CONVERSION_OFFSET = 75.0
-MM_TO_IN_CONVERSION_FACTOR = 0.0393701
-
-
-
-class Event(BaseModel):
-    '''
-    Class for keeping track of the event data
-    '''
-    name: str
-    fields: Dict[str, Any]
-    tags: Dict[str, Any]
-    timestamp: float
+    data model will have 
 
 
-class LinpotEvent(BaseModel):
-    '''
-    Class for keeping track of linpot event data
-    '''
-    front_left: float
-    front_right: float
-    rear_left: float
-    rear_right: float
+"""
+from typing import List, Optional, Union, Literal, Dict, Any, Annotated
+from enum import Enum 
 
-    def calculate_displacements_mm(self, event: Event)-> Event:
-        """calcualtes displacements in mm from linpot values
-
-        Returns:
-            dict: displacements in mm
-        """
-
-        displacements = {}
-        linpots = ["front_left", "front_right", "rear_left", "rear_right"]
-
-        for key in linpots:
-            current_value = getattr(self, key)
-            converted_to_mm = -(current_value * LINPOT_CONVERSION_CONSTANT) + LINPOT_CONVERSION_OFFSET
-            displacements[key] = converted_to_mm
-
-        event.fields.update(displacements)
-        
-        return event
-
-    def calculate_wheel_loads(self):
-        pass
+from datetime import datetime
+from pydantic import BaseModel, Field, ValidationError
 
 
-class AccelGyroEvent(BaseModel):
-    '''
-    Class for keeping track of accelgyro event data
-    '''
-    def calculate_gforce():
-        pass
+# Session Models 
+
+class SessionStateEnum(str, Enum):
+    OPEN = "open"
+    CLOSED = "closed"
+    ERROR = "error"
+
+class SessionDataModel(BaseModel):
+    """
+    All session data
+    """
+    id: str
+    start: datetime
+    stop: Optional[datetime]
+    status: SessionStateEnum
+    car: str
+    driver: Optional[str]
+
+class SessionEvent(BaseModel):
+    event_type: Literal["session"]
+    data: SessionDataModel
+
+# Data Models 
+
+class MetricModel(BaseModel):
+    time: datetime 
+    sensor_id: int 
+    data: float 
+
+class MetricDataModel(BaseModel):
+    metrics: List[MetricModel]
+
+class MetricEvent(BaseModel):
+    event_type: Literal["metrics"]
+
+    data: MetricDataModel
+
+# Event Model 
 
 
+Event = Annotated[Union[MetricEvent, SessionEvent], Field(discriminator="event_type")]
 
-class ECUEvent(BaseModel):
-    '''
-    Class for keeping track of ecu event data
-    '''
-    pass
+class EventModel(BaseModel):
+    event: Event
