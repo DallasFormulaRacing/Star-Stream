@@ -9,3 +9,4 @@ requests
 certifi
 python-can
 pydantic
+asyncpg
