@@ -1,0 +1,19 @@
+# Validates pull request commit messages following conventional commits https://www.conventionalcommits.org/en/v1.0.0/
+# <type>[optional scope]: <description>
+# [optional body]
+# [optional footers(s)]
+
+name: PR Conventional Commit Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+jobs:
+  validate-pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR Conventional Commit Validation
+        uses:  ytanikin/PRConventionalCommits@1.1.0
+        with:
+         task_types: '["feat","fix","docs","test","ci","refactor","perf","chore","revert"]'
