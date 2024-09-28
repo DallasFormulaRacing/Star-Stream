@@ -1,5 +1,5 @@
 from event import DataTransformer as DT
-from event import parser as PS
+from event import Parser
 from datetime import datetime
 import azure.functions as func
 import logging
@@ -12,6 +12,7 @@ import json
 import dns.resolver
 from can import Message
 from data_deserializer import MessageData
+from event import DataTransformer, Parser
 dns.resolver.default_resolver=dns.resolver.Resolver(configure=False)
 dns.resolver.default_resolver.nameservers=['8.8.8.8']
 
@@ -21,8 +22,8 @@ app = func.FunctionApp()
 
 @app.function_name("EventHubTrigger1")
 @app.event_hub_message_trigger(arg_name="azeventhub", event_hub_name="metricforwarder", cardinality="many",
-                               connection="metricsforward_metricmanager_EVENTHUB") 
-def eventhub_processor(azeventhub: func.EventHubEvent):    
+                               connection="metricsforward_metricmanager_EVENTHUB")
+def eventhub_processor(azeventhub: func.EventHubEvent):
     events = [json.loads(event.get_body().decode('utf-8')) for event in azeventhub]
 
     logging.info("Processing %d events; first event: %s", len(events), json.dumps(events[0], indent=3))
@@ -34,6 +35,9 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
 
     # group all events that have the same event['tasg']
     for event in events:
+
+        Parser(event).parse()
+
         if event["tags"].get("source", "") == "ecu":
             arbitration_id = event["fields"].get("id", 0)
             raw_data = event["fields"].get("data", "")
@@ -46,9 +50,11 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
             msg_data = MessageData(msg)
             try:
                 event["fields"] = json.loads(json.dumps(msg_data.to_dict(), default=str))
-            except Exception: # TODO: Make this a specific exception
+            except Exception:  # TODO: Make this a specific exception
                 logging.error("[ECU] Error converting to dict: %s", msg)
                 continue
+        elif event["tags"].get("source", "") == "linpot":
+            
         tags = event['tags']
 
         # Call frozen set because we can't hash a dictionary
@@ -70,8 +76,8 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
     post_data = {
         "streams": [
             {
-                "stream": {k:v for (k,v) in tags},
-                "values": [ # this stupid conversion to nanoseconds. Who tf does logs in nanoseconds
+                "stream": {k: v for (k, v) in tags},
+                "values": [  # this stupid conversion to nanoseconds. Who tf does logs in nanoseconds
                     [str(dump["timestamp"] * 1000000), json.dumps(dump['fields'], default=str)] for dump in dumps
                 ]
             } for tags, dumps in data.items()
@@ -94,10 +100,10 @@ def eventhub_processor(azeventhub: func.EventHubEvent):
     documents = []
     for doc in events:
         doc = {
-                "metadata": doc['tags'],
-                "timestamp": datetime.fromtimestamp(doc['timestamp'] / 1000),
-                **doc['fields']
-            }
+            "metadata": doc['tags'],
+            "timestamp": datetime.fromtimestamp(doc['timestamp'] / 1000),
+            **doc['fields']
+        }
         # validate timestamp because they suck
         if doc['timestamp'] > datetime.now() or doc['timestamp'] < datetime(2020, 1, 1):
             logging.error("Invalid timestamp: %s", doc['timestamp'])
