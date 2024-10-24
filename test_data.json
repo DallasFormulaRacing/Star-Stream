@@ -1,5 +1,4 @@
-{
-    "event": {
+[ {
         "event_type": "metrics",
         "data": [
             {
@@ -18,5 +17,28 @@
                 "data": 4.4
             }
         ]
+    },
+    {
+        "event_type": "session",
+        "data":[
+            {
+                "id": "4",
+                "status": "open",
+                "start": 1727338611.289379,
+                "car": "IC24"
+            },
+            {
+                "id": "5",
+                "status": "closed",
+                "stop": 1727338613.289379
+            },
+            {
+                "id":"7",
+                "status": "error",
+                "error_name": "sensor_error",
+                "error_description": "Sensor 10 is not responding"
+
+            }
+        ]
     }
-}
+]

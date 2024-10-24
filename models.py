@@ -19,27 +19,30 @@ from pydantic import BaseModel, Field, ValidationError
 
 # Session Models 
 
-class SessionStateEnum(str, Enum):
-    OPEN = "open"
-    CLOSED = "closed"
-    ERROR = "error"
+class SessionStateEnum( Enum):
+    OPEN = "Open"
+    CLOSED = "Closed"
+    ERROR = "Error"
 
 """
 All session data
 """
+# the next 3 classes are the different session models we can do, similar to how metric has 1 model, 1 event
+# this time however session has 1 event and 3 models to select 
 class OpenStatus (BaseModel):
     id: str #
-    status: SessionStateEnum.OPEN
+    status: Literal["Open"]
     start: datetime
     car: str #IC24
+    
 class ClosedStatus(BaseModel):
     id: str
-    status: SessionStateEnum.CLOSED
+    status: Literal["Closed"]
     stop: datetime
     
 class ErrorStatus(BaseModel):
     id: str
-    status: SessionStateEnum.ERROR
+    status: Literal["Error"]
     error_name: str
     error_description: str
 
@@ -54,7 +57,7 @@ class SessionEvent(BaseModel):
 # Data(metric) Models 
 
 class MetricModel(BaseModel):
-    time: float 
+    time: datetime 
     sensor_id: int 
     data: float 
 

@@ -3,6 +3,8 @@
 # Manually managing azure-functions-worker may cause unexpected issues
 
 azure-functions
+azure.eventhub
+python-dotenv
 orjson
 pymongo[srv]==3.11
 requests

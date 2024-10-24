@@ -25,10 +25,10 @@ handlers: Dict[str, Handler] = {
 
 @app.function_name("EventHubTrigger1")
 @app.event_hub_message_trigger(arg_name="azeventhub", event_hub_name="metricforwarder", cardinality="many",
-                               connection="metricsforward_metricmanager_EVENTHUB")
+                               connection="metricsforward_metricmanager_EVENTHUB", consumer_group=os.getenv("GROUP_ID"))
 async def eventhub_processor(azeventhub: func.EventHubEvent):
 
-    # pass incoming events into the event class
+    # pass incoming events into the event azu
     events = [json.loads(event.get_body().decode('utf-8'))
               for event in azeventhub]
 
